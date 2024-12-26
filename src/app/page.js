@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Camera, Upload } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 const InstaxFilter = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -9,6 +10,7 @@ const InstaxFilter = () => {
   const [format, setFormat] = useState('mini');
   const [photoText, setPhotoText] = useState('');
   const [photoDate, setPhotoDate] = useState('');
+  const frameRef = useRef(null);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -56,9 +58,37 @@ const InstaxFilter = () => {
     }
   };
 
+  const captureFrame = async () => {
+    if (!frameRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(frameRef.current, {
+        scale: 4,
+        backgroundColor: 'transparent',
+        logging: false,
+        useCORS: true,
+        imageTimeout: 0,
+        windowWidth: frameRef.current.offsetWidth,
+        windowHeight: frameRef.current.offsetHeight,
+        x: 0,
+        y: 0,
+        width: frameRef.current.offsetWidth,
+        height: frameRef.current.offsetHeight
+      });
+      
+      const link = document.createElement('a');
+      link.download = `instax-${format}-${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      link.click();
+    } catch (err) {
+      setError('Failed to save image');
+      console.error('Save error:', err);
+    }
+  };
+
   const getFrameStyles = () => {
     const baseWidth = format === 'wide' ? 400 : 320;
-    const aspectRatio = format === 'wide' ? '99/62' : '62/46';
+    const aspectRatio = format === 'wide' ? '99/62' : '54/86';
     
     return {
       frameWidth: baseWidth,
@@ -100,7 +130,10 @@ const InstaxFilter = () => {
             </button>
           </div>
         </div>
-        <p className="text-gray-400 text-xs mt-2 mb-6 text-center">Images exist only in browser memory and are cleared on page refresh/close.</p>
+
+        <p className="text-gray-400 text-xs mt-2 mb-6 text-center">
+          Images exist only in browser memory and are cleared on page refresh/close.
+        </p>
 
         <div className="space-y-4">
           <label className="block cursor-pointer">
@@ -142,14 +175,14 @@ const InstaxFilter = () => {
           </div>
 
           {error && (
-            <div className="text-red-500 text-sm text-center">
+            <div className="text-red-400 text-center text-sm">
               {error}
             </div>
           )}
 
           {selectedImage && (
             <div className="relative mx-auto" style={{ width: `${styles.frameWidth}px` }}>
-              <div className="relative bg-white p-4 rounded-lg shadow-lg">
+              <div className="relative bg-white p-4 rounded-lg shadow-xl" ref={frameRef}>
                 <div 
                   className="relative overflow-hidden"
                   style={{ aspectRatio: styles.aspectRatio }}
@@ -163,6 +196,7 @@ const InstaxFilter = () => {
                         filter: 'contrast(1.1) saturate(1.2) brightness(1.1)',
                         mixBlendMode: 'multiply'
                       }}
+                      crossOrigin="anonymous"
                     />
                   </div>
                   <div 
@@ -192,6 +226,12 @@ const InstaxFilter = () => {
                   </div>
                 </div>
               </div>
+              <button 
+                onClick={captureFrame}
+                className="w-full mt-4 px-4 py-2 bg-gray-700 text-gray-200 rounded hover:bg-gray-600 transition-colors"
+              >
+                Save Photo
+              </button>
             </div>
           )}
         </div>
