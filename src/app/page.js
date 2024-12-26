@@ -1,17 +1,50 @@
+/**
+ * Instax Filter
+ * A web application that transforms digital photos into Instax-style instant photos.
+ * Features:
+ * - Supports both Instax Mini and Wide formats
+ * - Adds classic Instax frame
+ * - Allows text and date customization
+ * - Provides high-quality image download
+ * 
+ * @author: Adit Gupta
+ * @version: 1.0.0
+ * @license: MIT
+ */
+
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
+
+/**
+* lucide-react - Provides modern UI icons
+* Camera - Header icon for the app
+* Upload - Icon for file upload section
+*/
+
 import { Camera, Upload } from 'lucide-react';
+
+/**
+* html2canvas - Captures DOM elements as images
+* Used for downloading the styled Instax frame with all effects and text
+*/
+
 import html2canvas from 'html2canvas';
 
 const InstaxFilter = () => {
+  // State management for image, format, text, and error handling
   const [selectedImage, setSelectedImage] = useState(null);
   const [error, setError] = useState('');
   const [format, setFormat] = useState('mini');
   const [photoText, setPhotoText] = useState('');
   const [photoDate, setPhotoDate] = useState('');
-  const frameRef = useRef(null);
 
+  /**
+   * Handles image file upload
+   * Supports regular image formats and HEIC
+   * Converts uploaded file to base64 for display
+   */
+  
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     setError('');
@@ -37,6 +70,10 @@ const InstaxFilter = () => {
     }
   };
 
+  /**
+   * Handles text input with character limit
+   * Maximum 50 characters allowed
+   */
   const handleTextChange = (e) => {
     const text = e.target.value;
     if (text.length <= 50) {
@@ -44,6 +81,10 @@ const InstaxFilter = () => {
     }
   };
 
+  /**
+   * Formats date input into "MMM DD, YYYY" format
+   * Example: "Dec 24, 2024"
+   */
   const handleDateChange = (e) => {
     const date = e.target.value;
     if (date) {
@@ -58,22 +99,28 @@ const InstaxFilter = () => {
     }
   };
 
+  /**
+   * Captures the styled frame and downloads as PNG
+   * Uses html2canvas for high-quality capture
+   * Maintains aspect ratio and applies correct scaling
+   */
   const captureFrame = async () => {
-    if (!frameRef.current) return;
+    const frameRef = document.querySelector('.instax-frame');
+    if (!frameRef) return;
     
     try {
-      const canvas = await html2canvas(frameRef.current, {
+      const canvas = await html2canvas(frameRef, {
         scale: 4,
         backgroundColor: 'transparent',
         logging: false,
         useCORS: true,
         imageTimeout: 0,
-        windowWidth: frameRef.current.offsetWidth,
-        windowHeight: frameRef.current.offsetHeight,
+        windowWidth: frameRef.offsetWidth,
+        windowHeight: frameRef.offsetHeight,
         x: 0,
         y: 0,
-        width: frameRef.current.offsetWidth,
-        height: frameRef.current.offsetHeight
+        width: frameRef.offsetWidth,
+        height: frameRef.offsetHeight
       });
       
       const link = document.createElement('a');
@@ -86,6 +133,11 @@ const InstaxFilter = () => {
     }
   };
 
+  /**
+   * Calculates frame dimensions based on format
+   * Mini: 54:86 aspect ratio
+   * Wide: 99:62 aspect ratio
+   */
   const getFrameStyles = () => {
     const baseWidth = format === 'wide' ? 400 : 320;
     const aspectRatio = format === 'wide' ? '99/62' : '54/86';
@@ -102,6 +154,7 @@ const InstaxFilter = () => {
   return (
     <div className="min-h-screen bg-gray-900 p-4 md:p-8">
       <div className="max-w-md mx-auto bg-gray-800 rounded-lg shadow-xl p-6">
+        {/* Header with title and format selection */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-semibold flex items-center gap-2 text-white">
             <Camera className="w-6 h-6" />
@@ -131,11 +184,13 @@ const InstaxFilter = () => {
           </div>
         </div>
 
+        {/* Privacy notice */}
         <p className="text-gray-400 text-xs mt-2 mb-6 text-center">
           Images exist only in browser memory and are cleared on page refresh/close.
         </p>
 
         <div className="space-y-4">
+          {/* Image upload section */}
           <label className="block cursor-pointer">
             <input
               type="file"
@@ -149,6 +204,7 @@ const InstaxFilter = () => {
             </div>
           </label>
 
+          {/* Text input */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Photo Text ({50 - photoText.length} chars left)
@@ -163,6 +219,7 @@ const InstaxFilter = () => {
             />
           </div>
 
+          {/* Date input */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Photo Date
@@ -174,20 +231,23 @@ const InstaxFilter = () => {
             />
           </div>
 
+          {/* Error display */}
           {error && (
             <div className="text-red-400 text-center text-sm">
               {error}
             </div>
           )}
 
+          {/* Instax frame display */}
           {selectedImage && (
             <div className="relative mx-auto" style={{ width: `${styles.frameWidth}px` }}>
-              <div className="relative bg-white p-4 rounded-lg shadow-xl" ref={frameRef}>
+              <div className="relative bg-white p-4 rounded-lg shadow-xl instax-frame">
                 <div 
                   className="relative overflow-hidden"
                   style={{ aspectRatio: styles.aspectRatio }}
                 >
-                  <div className="absolute inset-0 p-2">
+                  {/* Image with filters */}
+                  <div className="absolute inset-0 px-2 pt-4 pb-2">
                     <img
                       src={selectedImage}
                       alt="Uploaded"
@@ -199,6 +259,7 @@ const InstaxFilter = () => {
                       crossOrigin="anonymous"
                     />
                   </div>
+                  {/* Light reflection effect */}
                   <div 
                     className="absolute inset-0 pointer-events-none"
                     style={{
@@ -206,8 +267,10 @@ const InstaxFilter = () => {
                       boxShadow: 'inset 0 0 30px rgba(0,0,0,0.1)'
                     }}
                   />
+                  {/* Frame border */}
                   <div className="absolute inset-0 border-8 border-white rounded" />
                 </div>
+                {/* Development strip */}
                 <div 
                   className="bg-white mt-2 rounded"
                   style={{ height: `${styles.stripHeight}px` }}
@@ -226,6 +289,7 @@ const InstaxFilter = () => {
                   </div>
                 </div>
               </div>
+              {/* Download button */}
               <button 
                 onClick={captureFrame}
                 className="w-full mt-4 px-4 py-2 bg-gray-700 text-gray-200 rounded hover:bg-gray-600 transition-colors"
